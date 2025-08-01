@@ -1,5 +1,7 @@
 # Crypto Notion Price Updater
 
+[![Update Crypto Prices](https://github.com/marcluettecke/crypto-notion-updater/actions/workflows/update-crypto-prices.yml/badge.svg)](https://github.com/marcluettecke/crypto-notion-updater/actions/workflows/update-crypto-prices.yml)
+
 Automatically update Bitcoin and Ethereum prices in your Notion database using GitHub Actions - completely free!
 
 ## Features
