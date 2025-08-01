@@ -43,53 +43,78 @@ def update_notion_database(prices):
         print("Missing NOTION_TOKEN or NOTION_DATABASE_ID environment variables")
         return
     
+    # Validate prices are reasonable (basic sanity check)
+    if prices['bitcoin']['price'] < 1000 or prices['bitcoin']['price'] > 1000000:
+        print(f"Warning: Bitcoin price {prices['bitcoin']['price']} seems unrealistic, skipping update")
+        return
+    
+    if prices['ethereum']['price'] < 10 or prices['ethereum']['price'] > 100000:
+        print(f"Warning: Ethereum price {prices['ethereum']['price']} seems unrealistic, skipping update")
+        return
+    
     try:
-        # Query the database to get all entries
-        response = notion.databases.query(database_id=database_id)
+        # First, collect all pages that need updating
+        all_pages = []
         
-        for page in response['results']:
+        # Query the database with filter to only get BTC and ETH entries
+        filter_query = {
+            "or": [
+                {"property": "Ticker", "select": {"equals": "BTC"}},
+                {"property": "Ticker", "select": {"equals": "ETH"}}
+            ]
+        }
+        
+        response = notion.databases.query(
+            database_id=database_id,
+            filter=filter_query
+        )
+        
+        all_pages.extend(response['results'])
+        
+        # Handle pagination if there are more results
+        while response.get('has_more'):
+            response = notion.databases.query(
+                database_id=database_id,
+                filter=filter_query,
+                start_cursor=response['next_cursor']
+            )
+            all_pages.extend(response['results'])
+        
+        # Now update all pages with the appropriate prices
+        btc_count = 0
+        eth_count = 0
+        
+        btc_price = prices['bitcoin']['price']
+        eth_price = prices['ethereum']['price']
+        
+        for page in all_pages:
             properties = page['properties']
             
-            # Check if this is a Bitcoin or Ethereum entry
-            # Adjust these property names based on your Notion database structure
-            if 'Cryptocurrency' in properties:
-                crypto_name = properties['Cryptocurrency'].get('title', [{}])[0].get('text', {}).get('content', '').lower()
+            if 'Ticker' in properties and properties['Ticker'].get('select'):
+                ticker = properties['Ticker']['select'].get('name', '')
                 
-                if crypto_name == 'bitcoin' and prices['bitcoin']:
+                if ticker == 'BTC':
                     update_data = {
-                        'Current Price': {
-                            'number': prices['bitcoin']['price']
-                        },
-                        '24h Change %': {
-                            'number': round(prices['bitcoin']['change_24h'], 2)
-                        },
-                        'Last Updated': {
-                            'date': {
-                                'start': datetime.now().isoformat()
-                            }
+                        'Price today': {
+                            'number': btc_price
                         }
                     }
-                    
                     notion.pages.update(page_id=page['id'], properties=update_data)
-                    print(f"Updated Bitcoin price: €{prices['bitcoin']['price']:,.2f}")
+                    btc_count += 1
                     
-                elif crypto_name == 'ethereum' and prices['ethereum']:
+                elif ticker == 'ETH':
                     update_data = {
-                        'Current Price': {
-                            'number': prices['ethereum']['price']
-                        },
-                        '24h Change %': {
-                            'number': round(prices['ethereum']['change_24h'], 2)
-                        },
-                        'Last Updated': {
-                            'date': {
-                                'start': datetime.now().isoformat()
-                            }
+                        'Price today': {
+                            'number': eth_price
                         }
                     }
-                    
                     notion.pages.update(page_id=page['id'], properties=update_data)
-                    print(f"Updated Ethereum price: €{prices['ethereum']['price']:,.2f}")
+                    eth_count += 1
+        
+        if btc_count > 0:
+            print(f"Updated {btc_count} Bitcoin entries with price: €{btc_price:,.2f}")
+        if eth_count > 0:
+            print(f"Updated {eth_count} Ethereum entries with price: €{eth_price:,.2f}")
                     
     except Exception as e:
         print(f"Error updating Notion database: {e}")
