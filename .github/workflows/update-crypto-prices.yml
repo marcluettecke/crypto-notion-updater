@@ -1,6 +1,8 @@
 name: Update Crypto Prices in Notion
 
 on:
+  push:
+    branches: [ main ]
   schedule:
     # Run every day at 9:00 AM UTC
     - cron: '0 9 * * *'
