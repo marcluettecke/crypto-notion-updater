@@ -97,6 +97,11 @@ def update_notion_database(prices):
                     update_data = {
                         'Price today': {
                             'number': btc_price
+                        },
+                        'Last updated': {
+                            'date': {
+                                'start': datetime.now().isoformat()
+                            }
                         }
                     }
                     notion.pages.update(page_id=page['id'], properties=update_data)
@@ -106,6 +111,11 @@ def update_notion_database(prices):
                     update_data = {
                         'Price today': {
                             'number': eth_price
+                        },
+                        'Last updated': {
+                            'date': {
+                                'start': datetime.now().isoformat()
+                            }
                         }
                     }
                     notion.pages.update(page_id=page['id'], properties=update_data)
