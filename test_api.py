@@ -1,12 +1,29 @@
+"""
+CoinGecko API Test Utility
+
+This module tests the CoinGecko API endpoints to verify connectivity
+and display current cryptocurrency prices.
+
+Author: Marc Luettecke
+License: MIT
+"""
+
 import requests
 from datetime import datetime
 
+
 def test_coingecko_api():
-    """Test CoinGecko API endpoints and display results"""
+    """
+    Test CoinGecko API endpoints and display current cryptocurrency prices.
+    
+    This function performs the following tests:
+    1. Fetches current prices for Bitcoin and Ethereum
+    2. Displays detailed price information including 24h changes
+    3. Tests the API health endpoint
+    """
     print("Testing CoinGecko API...")
     print("-" * 50)
     
-    # Test simple price endpoint
     url = "https://api.coingecko.com/api/v3/simple/price"
     params = {
         'ids': 'bitcoin,ethereum',
@@ -54,7 +71,6 @@ def test_coingecko_api():
     except Exception as e:
         print(f"Error testing API: {e}")
     
-    # Test API ping endpoint
     print("\n" + "-"*50)
     print("Testing API health...")
     ping_url = "https://api.coingecko.com/api/v3/ping"
@@ -64,6 +80,7 @@ def test_coingecko_api():
         print(f"Ping Response: {ping_response.json()}")
     except Exception as e:
         print(f"Ping failed: {e}")
+
 
 if __name__ == "__main__":
     test_coingecko_api()

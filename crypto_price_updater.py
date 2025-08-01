@@ -1,10 +1,28 @@
+"""
+Crypto Price Updater for Notion
+
+This module fetches current cryptocurrency prices from the CoinGecko API
+and updates a Notion database with the latest values.
+
+Author: Marc Luettecke
+License: MIT
+"""
+
 import requests
 import os
 from datetime import datetime
 from notion_client import Client
 
+
 def get_crypto_prices():
-    """Fetch current BTC and ETH prices from CoinGecko API"""
+    """
+    Fetch current Bitcoin and Ethereum prices from CoinGecko API.
+    
+    Returns:
+        dict: A dictionary containing price data for Bitcoin and Ethereum,
+              including current price, 24h change percentage, and market cap.
+              Returns None if the API request fails.
+    """
     url = "https://api.coingecko.com/api/v3/simple/price"
     params = {
         'ids': 'bitcoin,ethereum',
@@ -34,8 +52,17 @@ def get_crypto_prices():
         print(f"Error fetching prices: {e}")
         return None
 
+
 def update_notion_database(prices):
-    """Update Notion database with latest crypto prices"""
+    """
+    Update Notion database with the latest cryptocurrency prices.
+    
+    This function queries the Notion database for all BTC and ETH entries
+    and updates their 'Price today' and 'Last updated' fields.
+    
+    Args:
+        prices (dict): Dictionary containing current prices for Bitcoin and Ethereum
+    """
     notion = Client(auth=os.environ.get("NOTION_TOKEN"))
     database_id = os.environ.get("NOTION_DATABASE_ID")
     
@@ -43,7 +70,6 @@ def update_notion_database(prices):
         print("Missing NOTION_TOKEN or NOTION_DATABASE_ID environment variables")
         return
     
-    # Validate prices are reasonable (basic sanity check)
     if prices['bitcoin']['price'] < 1000 or prices['bitcoin']['price'] > 1000000:
         print(f"Warning: Bitcoin price {prices['bitcoin']['price']} seems unrealistic, skipping update")
         return
@@ -53,10 +79,8 @@ def update_notion_database(prices):
         return
     
     try:
-        # First, collect all pages that need updating
         all_pages = []
         
-        # Query the database with filter to only get BTC and ETH entries
         filter_query = {
             "or": [
                 {"property": "Ticker", "select": {"equals": "BTC"}},
@@ -71,7 +95,6 @@ def update_notion_database(prices):
         
         all_pages.extend(response['results'])
         
-        # Handle pagination if there are more results
         while response.get('has_more'):
             response = notion.databases.query(
                 database_id=database_id,
@@ -80,12 +103,12 @@ def update_notion_database(prices):
             )
             all_pages.extend(response['results'])
         
-        # Now update all pages with the appropriate prices
         btc_count = 0
         eth_count = 0
         
         btc_price = prices['bitcoin']['price']
         eth_price = prices['ethereum']['price']
+        current_timestamp = datetime.now().isoformat()
         
         for page in all_pages:
             properties = page['properties']
@@ -100,7 +123,7 @@ def update_notion_database(prices):
                         },
                         'Last updated': {
                             'date': {
-                                'start': datetime.now().isoformat()
+                                'start': current_timestamp
                             }
                         }
                     }
@@ -114,7 +137,7 @@ def update_notion_database(prices):
                         },
                         'Last updated': {
                             'date': {
-                                'start': datetime.now().isoformat()
+                                'start': current_timestamp
                             }
                         }
                     }
@@ -129,21 +152,26 @@ def update_notion_database(prices):
     except Exception as e:
         print(f"Error updating Notion database: {e}")
 
+
 def main():
+    """
+    Main execution function.
+    
+    Fetches cryptocurrency prices and updates the Notion database.
+    """
     print(f"Starting crypto price update at {datetime.now()}")
     
-    # Fetch latest prices
     prices = get_crypto_prices()
     
     if prices:
         print(f"Bitcoin: €{prices['bitcoin']['price']:,.2f} ({prices['bitcoin']['change_24h']:.2f}%)")
         print(f"Ethereum: €{prices['ethereum']['price']:,.2f} ({prices['ethereum']['change_24h']:.2f}%)")
         
-        # Update Notion database
         update_notion_database(prices)
         print("Update completed successfully!")
     else:
         print("Failed to fetch crypto prices")
+
 
 if __name__ == "__main__":
     main()

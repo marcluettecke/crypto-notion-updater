@@ -1,31 +1,36 @@
 name: Update Crypto Prices in Notion
 
+# Workflow triggers
 on:
   push:
     branches: [ main ]
   schedule:
-    # Run every day at 5:00 AM UTC (7:00 AM CEST/6:00 AM CET)
+    # Daily execution at 5:00 AM UTC (7:00 AM CEST / 6:00 AM CET)
     - cron: '0 5 * * *'
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch: # Enable manual triggering from Actions tab
 
 jobs:
   update-prices:
     runs-on: ubuntu-latest
     
     steps:
+    # Checkout repository code
     - name: Checkout repository
       uses: actions/checkout@v4
     
+    # Configure Python environment
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
     
+    # Install project dependencies
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
+    # Execute price update script with Notion credentials
     - name: Run crypto price updater
       env:
         NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
