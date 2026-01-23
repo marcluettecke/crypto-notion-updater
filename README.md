@@ -8,7 +8,7 @@ Automated cryptocurrency price tracker that updates Bitcoin and Ethereum prices 
 
 ## 🚀 Features
 
-- **Real-time Price Updates**: Fetches current BTC and ETH prices in EUR from CoinGecko API
+- **Real-time Price Updates**: Fetches current BTC and ETH prices in EUR from CoinGecko API access
 - **Automated Daily Updates**: Runs automatically every day at 7:00 AM CEST/6:00 AM CET
 - **Notion Integration**: Directly updates your investment tracking database
 - **GitHub Actions**: Free hosting and execution, no server required
